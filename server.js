@@ -4,9 +4,11 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 
+import os from 'os'
+
 import notifier from 'node-notifier'
 
-
+const powertoast = os.platform() === 'win32' ? require('powertoast') : null;
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -150,13 +152,27 @@ async function procesarInformacion(data, condicion, filePath) {
 
         const { establishment_nit } = data
         const urlFactura = `http://aristafe.com:81/storage/${establishment_nit}/${response.data.urlinvoicepdf}`;
-        notifier.notify({
-            title: 'Factura Disponible',
-            message: `Haga clic para ver la factura: ${response.data.urlinvoicepdf}`,
-            wait: true,
-            timeout: 99,
-            open: urlFactura
-        });
+
+
+        if (os.platform() === 'darwin') { // Si el SO es macOS
+
+            notifier.notify({
+                title: 'Factura Disponible',
+                message: `Haga clic para ver la factura: ${response.data.urlinvoicepdf}`,
+                wait: true,
+                timeout: 99,
+                open: urlFactura
+            });
+
+        } else if (os.platform() === 'win32') { // Si el SO es Windows
+            powertoast({
+                title: titulo,
+                message: mensaje.message,
+                sound: true,
+                duration: "long",
+                onClick: `${urlFactura}` // Esto debería abrir el enlace al hacer clic en la notificación
+            }).catch(console.error);
+        }
 
 
         // Descargar y guardar archivos adjuntos especificados en la respuesta
@@ -189,13 +205,23 @@ function notificación(titulo, mensaje, url) {
     const notificationOptions = {
         title: titulo,
         message: mensaje.message,
-        sound: true, // Sonido de notificación
+        sound: true,
         wait: true,
         timeout: 99,
         open: `${url}`
     };
-    // Enviar la notificación
-    notifier.notify(notificationOptions);
+
+    if (os.platform() === 'darwin') { // Si el SO es macOS
+        notifier.notify(notificationOptions);
+    } else if (os.platform() === 'win32') { // Si el SO es Windows
+        powertoast({
+            title: titulo,
+            message: mensaje.message,
+            sound: true,
+            duration: "long",
+            onClick: `${url}` // Esto debería abrir el enlace al hacer clic en la notificación
+        }).catch(console.error);
+    }
 }
 
 // Monitorea el directorio

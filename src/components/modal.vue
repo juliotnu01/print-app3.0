@@ -16,9 +16,12 @@ onMounted(() => {
     :style="msg.StatusCode == '00' ? 'background-color: green; color: white' : msg.StatusCode == '99' ? 'background-color: red; color: white' : 'background-color: red; color: white'">
     {{ msg.message }}</h3>
   <h4>{{ msg.StatusDescription }}</h4>
-  <ul>
-    <li v-for="(item, index) in msg.errores" :key="index">{{ item }}</li>
-  </ul>
+  <div>
+    <ul v-if="Array.isArray(msg.errores)">
+      <li v-for="(item, index) in msg.errores" :key="index">{{ item }}</li>
+    </ul>
+    <p v-else>{{ msg.errores }}</p>
+  </div>
   <div class="flex-container" style="display: flex; justify-content: space-between; margin-top: 50px;">
     <span>{{ msg.Created }}</span>
     <span>{{ msg.envioCorreo ? 'Correo enviado' : "Correo no enviado" }}</span>

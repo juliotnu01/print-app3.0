@@ -46,46 +46,48 @@ function processTxtFile(filePath, filename) {
 }
 
 async function procesarInformacion(data, condicion, filePath) {
-    // Crear directorios si no existen
-    await fs.promises.mkdir(FilePathEnviados, { recursive: true });
-    await fs.promises.mkdir(FilePathRespuesta, { recursive: true });
-
-    // Mover archivo a la carpeta 'Enviados'
-    const newFilePath = path.join(FilePathEnviados, path.basename(filePath));
-    await fs.promises.rename(filePath, newFilePath);
-
-
-    let url = '';
-    switch (condicion) {
-        case "FV":
-            url = 'http://aristafe.com:81/api/ubl2.1/invoice';
-            break;
-        case "FP":
-            url = 'http://aristafe.com:81/api/ubl2.1/eqdoc';
-            break;
-        case "NC":
-            url = 'http://aristafe.com:81/api/ubl2.1/credit-note';
-            break;
-        case "ND":
-            url = 'http://aristafe.com:81/api/ubl2.1/debit-note';
-            break;
-        case "DS":
-            url = 'http://aristafe.com:81/api/ubl2.1/support-document';
-            break;
-        case "DSA":
-            url = 'http://aristafe.com:81/api/ubl2.1/sd-credit-note';
-            break;
-        case "FE":
-            url = 'http://aristafe.com:81/api/ubl2.1/invoice-export';
-            break;
-        default:
-            console.log('Condición no reconocida, no se realiza ninguna acción');
-            return;
-    }
-
     try {
 
+        // Crear directorios si no existen
+        await fs.promises.mkdir(FilePathEnviados, { recursive: true });
+        await fs.promises.mkdir(FilePathRespuesta, { recursive: true });
+
+        // Mover archivo a la carpeta 'Enviados'
+        const newFilePath = path.join(FilePathEnviados, path.basename(filePath));
+        await fs.promises.rename(filePath, newFilePath);
+
+
+        let url = '';
+        switch (condicion) {
+            case "FV":
+                url = 'http://aristafe.com:81/api/ubl2.1/invoice';
+                break;
+            case "FP":
+                url = 'http://aristafe.com:81/api/ubl2.1/eqdoc';
+                break;
+            case "NC":
+                url = 'http://aristafe.com:81/api/ubl2.1/credit-note';
+                break;
+            case "ND":
+                url = 'http://aristafe.com:81/api/ubl2.1/debit-note';
+                break;
+            case "DS":
+                url = 'http://aristafe.com:81/api/ubl2.1/support-document';
+                break;
+            case "DSA":
+                url = 'http://aristafe.com:81/api/ubl2.1/sd-credit-note';
+                break;
+            case "FE":
+                url = 'http://aristafe.com:81/api/ubl2.1/invoice-export';
+                break;
+            default:
+                console.log('Condición no reconocida, no se realiza ninguna acción');
+                return;
+        }
+
+
         const response = await axios.post(url, data, { headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${data.template_token}` } });
+
 
         // Guardar respuesta en la carpeta 'Respuestas'
         const responseFilePath = path.join(FilePathRespuesta, `${path.basename(`${filePath}.txt`, '.txt')}-RESP.json`);
@@ -145,18 +147,16 @@ async function procesarInformacion(data, condicion, filePath) {
             notificación(StatusDescription, model, `http://localhost:5173/${JSON.stringify(model)}`)
         }
 
-        if (!data.configuration_factura.factura_tamano == 'PO' && response.data.urlinvoicepdf ) {
 
-            const { establishment_nit } = data
-            const urlFactura = `http://aristafe.com:81/storage/${establishment_nit}/${response.data.urlinvoicepdf}`;
-            notifier.notify({
-                title: 'Factura Disponible',
-                message: `Haga clic para ver la factura: ${response.data.urlinvoicepdf}`,
-                wait: true,
-                timeout: 99,
-                open: urlFactura
-            });
-        }
+        const { establishment_nit } = data
+        const urlFactura = `http://aristafe.com:81/storage/${establishment_nit}/${response.data.urlinvoicepdf}`;
+        notifier.notify({
+            title: 'Factura Disponible',
+            message: `Haga clic para ver la factura: ${response.data.urlinvoicepdf}`,
+            wait: true,
+            timeout: 99,
+            open: urlFactura
+        });
 
 
         // Descargar y guardar archivos adjuntos especificados en la respuesta

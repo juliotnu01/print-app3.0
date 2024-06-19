@@ -3,12 +3,12 @@ import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
-
 import os from 'os'
-
 import notifier from 'node-notifier'
+import open from 'open';
+import { exec } from 'child_process';
 
-const powertoast = os.platform() === 'win32' ? require('powertoast') : null;
+// const powertoast = os.platform() === 'win32' ? require('powertoast') : null;
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -23,7 +23,6 @@ const FilePathRespuesta = "/Users/doctorgroup/Documents/Respuestas";
 fs.promises.mkdir(FilePathEnviados, { recursive: true }).catch(console.error);
 fs.promises.mkdir(FilePathRespuesta, { recursive: true }).catch(console.error);
 
-
 // Función para procesar el archivo txt
 function processTxtFile(filePath, filename) {
     fs.readFile(filePath, 'utf8', async (err, data) => {
@@ -31,14 +30,12 @@ function processTxtFile(filePath, filename) {
             console.error(`Error leyendo el archivo ${filePath}:`, err);
             return;
         }
-
         // Extrae las letras iniciales del nombre del archivo, incluyendo espacios antes de los números
         const match = filename.match(/^[A-Za-z\s]+(?=\d)/);
         if (match) {
             const letrasIniciales = match[0].trim(); // Elimina espacios al final de las letras capturadas
             let mdata = JSON.parse(data)
             await procesarInformacion(mdata, letrasIniciales, filePath);
-
             if (mdata.configuration_factura.factura_tamano == 'PO') {
                 // ejecuta el print.php impresion de la factura
                 // axios(`http://localhost/print_pos/print.php?path=${FilePathEnviadosArgumento}${filename}`)
@@ -148,32 +145,27 @@ async function procesarInformacion(data, condicion, filePath) {
             }
             notificación(StatusDescription, model, `http://localhost:5173/${JSON.stringify(model)}`)
         }
-
-
         const { establishment_nit } = data
         const urlFactura = `http://aristafe.com:81/storage/${establishment_nit}/${response.data.urlinvoicepdf}`;
 
-
-        if (os.platform() === 'darwin') { // Si el SO es macOS
-
-            notifier.notify({
-                title: 'Factura Disponible',
-                message: `Haga clic para ver la factura: ${response.data.urlinvoicepdf}`,
-                wait: true,
-                timeout: 99,
-                open: urlFactura
+        const openUrl = (url) => {
+            exec(`open ${url}`, (error, stdout, stderr) => {
+                if (error) {
+                    console.error(`Error al abrir la URL: ${error}`);
+                    return;
+                }
+                console.log(`URL abierta: ${stdout}`);
             });
-
-        } else if (os.platform() === 'win32') { // Si el SO es Windows
-            powertoast({
-                title: titulo,
-                message: mensaje.message,
-                sound: true,
-                duration: "long",
-                onClick: `${urlFactura}` // Esto debería abrir el enlace al hacer clic en la notificación
-            }).catch(console.error);
         }
-
+        notifier.notify({
+            title: 'Factura Disponible',
+            message: `Haga clic para ver la factura: ${response.data.urlinvoicepdf}`,
+            wait: true,
+            timeout: 99,
+        });
+        notifier.on('click', function (notifierObject, options, event) {
+            openUrl(urlFactura);
+        });
 
         // Descargar y guardar archivos adjuntos especificados en la respuesta
         const filesToDownload = [
@@ -202,28 +194,29 @@ async function procesarInformacion(data, condicion, filePath) {
 
 function notificación(titulo, mensaje, url) {
 
-    const notificationOptions = {
+    const openUrlO = (url) => {
+        exec(`open ${url}`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error al abrir la URL: ${error}`);
+                return;
+            }
+            console.log(`URL abierta: ${stdout}`);
+        });
+    }
+    notifier.notify({
         title: titulo,
         message: mensaje.message,
         sound: true,
         wait: true,
         timeout: 99,
         open: `${url}`
-    };
+    })
 
-    if (os.platform() === 'darwin') { // Si el SO es macOS
-        notifier.notify(notificationOptions);
-    } else if (os.platform() === 'win32') { // Si el SO es Windows
-        powertoast({
-            title: titulo,
-            message: mensaje.message,
-            sound: true,
-            duration: "long",
-            onClick: `${url}` // Esto debería abrir el enlace al hacer clic en la notificación
-        }).catch(console.error);
-    }
+    notifier.on('click', function (notifierObject, options, event) {
+        openUrlO(url);
+    });
+
 }
-
 // Monitorea el directorio
 fs.watch(directoryPath, (eventType, filename) => {
     if (filename && path.extname(filename) === '.txt') {

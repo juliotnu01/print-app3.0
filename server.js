@@ -14,10 +14,10 @@ app.use(cors());
 app.use(express.json());
 
 // Ruta del directorio a monitorear
-const directoryPath = '/Users/doctorgroup/Documents';
-const FilePathEnviados = "/Users/doctorgroup/Documents/Enviados";
+const directoryPath = 'C:\\laragon\\www';
+const FilePathEnviados = "C:\\laragon\www\\Enviados";
 const FilePathEnviadosArgumento = "d:\\usr\\Enviados\\";
-const FilePathRespuesta = "/Users/doctorgroup/Documents/Respuestas";
+const FilePathRespuesta = "C:\\laragon\\www\\Respuestas";
 
 // Crear directorios si no existen
 fs.promises.mkdir(FilePathEnviados, { recursive: true }).catch(console.error);
@@ -128,7 +128,7 @@ async function procesarInformacion(data, condicion, filePath) {
             };
 
 
-            notificación(StatusDescription, model, `http://localhost:5173/${JSON.stringify(model)}`)
+            notificación(StatusDescription, model, `http://localhost:5173/?data=${encodeURIComponent(JSON.stringify(model))}`)
         } else {
             var model = {
                 message,
@@ -153,13 +153,14 @@ async function procesarInformacion(data, condicion, filePath) {
             const urlFactura = `http://aristafe.com:81/storage/${establishment_nit}/${response.data.urlinvoicepdf}`;
 
             const openUrl = (url) => {
-                exec(`open ${url}`, (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`Error al abrir la URL: ${error}`);
-                        return;
-                    }
-                    console.log(`URL abierta: ${stdout}`);
-                });
+                open(url)
+                // exec(`open ${url}`, (error, stdout, stderr) => {
+                //     if (error) {
+                //         console.error(`Error al abrir la URL: ${error}`);
+                //         return;
+                //     }
+                //     console.log(`URL abierta: ${stdout}`);
+                // });
             }
             notifier.notify({
                 title: 'Factura Disponible',
@@ -201,13 +202,14 @@ async function procesarInformacion(data, condicion, filePath) {
 function notificación(titulo, mensaje, url) {
 
     const openUrlO = (url) => {
-        execSync(`open "${url}"`, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`Error al abrir la URL: ${error}`);
-                return;
-            }
-            console.log(`URL abierta: ${stdout}`);
-        });
+        open(url)
+        // execSync(`open "${url}"`, (error, stdout, stderr) => {
+        //     if (error) {
+        //         console.error(`Error al abrir la URL: ${error}`);
+        //         return;
+        //     }
+        //     console.log(`URL abierta: ${stdout}`);
+        // });
     }
     notifier.notify({
         title: titulo,

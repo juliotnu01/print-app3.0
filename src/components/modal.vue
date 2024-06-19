@@ -2,13 +2,18 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 
-const msg: any = ref<string>('');
+const msg: any = ref({});
 const route: any = useRoute();
 
-
 onMounted(() => {
-  msg.value = JSON.parse(route.params.message) // Actualiza msg cuando el parámetro cambie
-
+  // Asumiendo que el parámetro de consulta se llama 'data'
+  if (route.query.data) {
+    try {
+      msg.value = JSON.parse(decodeURIComponent(route.query.data));
+    } catch (e) {
+      console.error('Error al parsear los datos:', e);
+    }
+  }
 });
 </script>
 <template>

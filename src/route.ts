@@ -4,7 +4,7 @@ import modal from './components/modal.vue'
 import viewPDf from './components/viewPDF.vue'
 const routes = [
    
-  { path: '/:message', component: modal },
+  { path: '/', component: modal },
   { path: '/pdf/:url', component: viewPDf },
 ]
 
